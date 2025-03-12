@@ -5,6 +5,8 @@ const fs = require("fs");
 const imageDir = path.join(__dirname + "../../uploads/image");
 const documentDir = path.join(__dirname + "../../uploads/document");
 
+const LINIT_FILE_SIZE = 2 * 1024 * 1024
+
 if (!fs.existsSync(imageDir)) {
     fs.mkdirSync(imageDir, { recursive: true });
 }
@@ -43,7 +45,7 @@ const storage = multer.diskStorage({
         let month = date_time.getMonth() + 1;
         let year = date_time.getFullYear();
 
-        cb(null, `${year}-${month}-${date} - ${file.originalname}`);
+        cb(null, ` ${Date.now()}_${year}_${month}_${date}_${file.originalname}`);
     },
 });
 
@@ -68,7 +70,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 2 * 1024 * 1024 },
+    limits: { fileSize:  LINIT_FILE_SIZE},
 });
 
 module.exports = upload;
