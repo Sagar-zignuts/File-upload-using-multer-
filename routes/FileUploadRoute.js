@@ -1,7 +1,8 @@
+const express = require("express");
+const router = express.Router();
 const upload = require("../middleware/MulterConfig");
-const FileUploadController = require("../controller/index");
-const router = require("express").Router();
+const { FileUploadController, UploadErrorHandler } = require("../controller/FileUploadController");
 
-router.post("/upload-file",FileUploadController);
+router.post("/upload-file", upload.single("file"), FileUploadController, UploadErrorHandler);
 
 module.exports = router;

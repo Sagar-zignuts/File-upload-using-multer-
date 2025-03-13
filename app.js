@@ -1,13 +1,17 @@
 const express = require("express");
-const FileUploadRoute = require("./routes/index");
+const dotenv = require("dotenv");
 
-require("dotenv").config();
-
+dotenv.config();
 const app = express();
-const port = process.env.PORT || 5000;
 
-app.use("/api", FileUploadRoute);
+const uploadRoutes = require("./routes/index");
 
-app.listen(port, () => {
-    console.log(`Server running on port number ${port}`);
-});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use("/api", uploadRoutes);
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

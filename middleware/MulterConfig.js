@@ -2,75 +2,71 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-const imageDir = path.join(__dirname + "../../uploads/image");
-const documentDir = path.join(__dirname + "../../uploads/document");
+// Define upload directories
+const uploadDir = path.join(__dirname, "../uploads");
+const imageDir = path.join(uploadDir, "images");
+const documentDir = path.join(uploadDir, "documents");
 
-const LINIT_FILE_SIZE = 2 * 1024 * 1024
+// Create folders if they don’t exist
+const createFolder = (folderPath) => {
+    if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
+    }
+};
+createFolder(imageDir);
+createFolder(documentDir);
 
-if (!fs.existsSync(imageDir)) {
-    fs.mkdirSync(imageDir, { recursive: true });
-}
+console.log("In config fun");
 
-if (!fs.existsSync(documentDir)) {
-    fs.mkdirSync(documentDir, { recursive: true });
-}
 
-//create storage and make file validation
+// Allowed file types mapping
+const fileTypes = {
+    "image/jpeg": "images",
+    "image/png": "images",
+    "image/gif": "images",
+    "application/pdf": "documents",
+    "application/msword": "documents",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "documents",
+};
+
+// Set file size limit (2MB)
+const FILE_SIZE_LIMIT = 2 * 1024 * 1024;
+
+// Storage Configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // this is file type based on MIME (Multipurpose Internet Mail Extensions) ,  based on this we seprate the files
-        const fileType = {
-            "image/jpeg": "image",
-            "image/png": "image",
-            "image/jpg": "image",
-            "image/gif": "image",
-            "application/pdf": "document",
-            "application/msword": "document",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                "document",
-        };
-        const folder = fileType[file.mimetype];
+        const folder = fileTypes[file.mimetype];
+        if (!folder) {
 
-        if (folder) {
-            cb(null, path.join(__dirname + `../../uploads/${folder}`));
-        } else {
-            cb(new Error("File type is not allowed here , Sorry ...."), false);
+            console.log("In destination");
+            
+            return cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", "Unsupported file type!"));
         }
+        cb(null, path.join(uploadDir, folder));
     },
     filename: (req, file, cb) => {
-        //just use for set file name as currnent_name + filename format
-        let ts = Date.now();
-        let date_time = new Date(ts);
-        let date = date_time.getDate();
-        let month = date_time.getMonth() + 1;
-        let year = date_time.getFullYear();
-
-        cb(null, ` ${Date.now()}_${year}_${month}_${date}_${file.originalname}`);
+        cb(null, `${Date.now()}_${file.originalname}`);
     },
 });
 
-// File filter for validation
-
+// File filter for validating file types
 const fileFilter = (req, file, cb) => {
-    const allowedFile = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    if (!allowedFile.includes(file.mimetype)) {
-        return cb(new Error("Unsupported file......"), false);
+    if (!fileTypes[file.mimetype]) {
+        console.log("In flielilter");
+        
+        return cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", "Unsupported file type!"), false);
     }
     cb(null, true);
 };
 
+// Multer Upload Middleware
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize:  LINIT_FILE_SIZE},
+    limits: {
+        fileSize: FILE_SIZE_LIMIT,
+        files: 1,
+    },
 });
 
 module.exports = upload;
